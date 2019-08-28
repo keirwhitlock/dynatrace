@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
 
 type dynatrace struct {
@@ -40,20 +41,16 @@ func (d *dynatrace) getConfig(c string) {
 
 func (d *dynatrace) getProblems() {
 
-	type problemCounts struct {
-		Inf         int `json:"INFRASTRUCTURE"`
-		Service     int `json:"SERVICE"`
-		Application int `json:"APPLICATION"`
-		Environment int `json:"ENVIRONMENT"`
-	}
-
-	type results struct {
-		TotalOpenProblemsCount int           `json:"totalOpenProblemsCount"`
-		OpenProblemCounts      problemCounts `json:"openProblemCounts"`
-	}
-
 	type result struct {
-		Result results `json:"result"`
+		Result struct {
+			TotalOpenProblemsCount int `json:"totalOpenProblemsCount"`
+			OpenProblemCounts      struct {
+				Inf         int `json:"INFRASTRUCTURE"`
+				Service     int `json:"SERVICE"`
+				Application int `json:"APPLICATION"`
+				Environment int `json:"ENVIRONMENT"`
+			} `json:"openProblemCounts"`
+		} `json:"result"`
 	}
 
 	path := "/api/v1/problem/status"
