@@ -12,7 +12,17 @@ import (
 type dynatrace struct {
 	url      string
 	token    string
-	problems map[string]int
+	problems struct {
+		Result struct {
+			TotalOpenProblemsCount int `json:"totalOpenProblemsCount"`
+			OpenProblemCounts      struct {
+				Inf         int `json:"INFRASTRUCTURE"`
+				Service     int `json:"SERVICE"`
+				Application int `json:"APPLICATION"`
+				Environment int `json:"ENVIRONMENT"`
+			} `json:"openProblemCounts"`
+		} `json:"result"`
+	}
 }
 
 func (d *dynatrace) getConfig(c string) {
@@ -41,18 +51,6 @@ func (d *dynatrace) getConfig(c string) {
 
 func (d *dynatrace) getProblems() {
 
-	type result struct {
-		Result struct {
-			TotalOpenProblemsCount int `json:"totalOpenProblemsCount"`
-			OpenProblemCounts      struct {
-				Inf         int `json:"INFRASTRUCTURE"`
-				Service     int `json:"SERVICE"`
-				Application int `json:"APPLICATION"`
-				Environment int `json:"ENVIRONMENT"`
-			} `json:"openProblemCounts"`
-		} `json:"result"`
-	}
-
 	path := "/api/v1/problem/status"
 	api := fmt.Sprintf("%s%s", d.url, path)
 
@@ -77,21 +75,17 @@ func (d *dynatrace) getProblems() {
 		panic(err)
 	}
 
-	var dynatraceProblems result
-	err = json.Unmarshal(output, &dynatraceProblems)
-	d.problems["Infrastructure"] = dynatraceProblems.Result.OpenProblemCounts.Inf
-	d.problems["Service"] = dynatraceProblems.Result.OpenProblemCounts.Service
-	d.problems["Application"] = dynatraceProblems.Result.OpenProblemCounts.Application
-	d.problems["Environment"] = dynatraceProblems.Result.OpenProblemCounts.Environment
+	err = json.Unmarshal(output, &d.problems)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
 
-	d := dynatrace{
-		problems: make(map[string]int),
-	}
+	d := dynatrace{}
 	d.getConfig("config.yml")
 	d.getProblems()
-	fmt.Printf("%v\n", d.problems)
 
+	fmt.Printf("\nDynatrace Issues:\n\tINFRASTRUCTURE: %v\n\tSERVICE: %v\n\tAPPLICATION: %v\n\tENVIRONMENT: %v\n", d.problems.Result.OpenProblemCounts.Inf, d.problems.Result.OpenProblemCounts.Service, d.problems.Result.OpenProblemCounts.Application, d.problems.Result.OpenProblemCounts.Environment)
 }
