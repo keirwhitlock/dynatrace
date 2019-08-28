@@ -75,7 +75,10 @@ func (d *dynatrace) getProblems() {
 		panic(err)
 	}
 
-	err = json.Unmarshal(output, &d.problems.Result)
+	err = json.Unmarshal(output, &d.problems)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
@@ -83,6 +86,6 @@ func main() {
 	d := dynatrace{}
 	d.getConfig("config.yml")
 	d.getProblems()
-	fmt.Printf("%v\n", d.problems.Result)
 
+	fmt.Printf("\nDynatrace Issues:\n\tINFRASTRUCTURE: %v\n\tSERVICE: %v\n\tAPPLICATION: %v\n\tENVIRONMENT: %v\n", d.problems.Result.OpenProblemCounts.Inf, d.problems.Result.OpenProblemCounts.Service, d.problems.Result.OpenProblemCounts.Application, d.problems.Result.OpenProblemCounts.Environment)
 }
